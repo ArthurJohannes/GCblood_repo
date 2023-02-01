@@ -1,16 +1,21 @@
-##  TITLE
+ 
+#### CALCULATES GENE EXPRESSION CORRELATION PROFILES AVERAGED OVER 15 DATASETS
+################################################################################
 
+
+#### script suitable for both RNA seq and microarray datasets put in GEO datasets (gds) format
+#### also handles multiple probes present for single gene in case of microarray data 
 
 
 ################################################################################
-#### CHOOSE MULTIGENE QUERY, AND DATASET COLLECTIONS
+#### PART 1 : CHOOSE MULTIGENE QUERY, AND DATASET COLLECTIONS
 ################################################################################
 
 
 #####################
-#### read all identifiers, is all genes on platforms GPL570 and GPL10558
-#### here no RNAseq datasets present, otherwise add more RNAseq identifiers
-#### to allow new HUGO gene names and gene aliases absent from GPL570 and GPL10558
+#### read all gene identifiers (all gene names on platforms GPL570 and GPL10558)
+#### No RNAseq datasets are present in the example collection, but otherwise add more RNAseq identifiers
+#### to include the more recent HUGO gene names and gene aliases absent from GPL570 and GPL10558
 
 setwd("~/GitHub/GCblood_repo/data")
 identifiersGPL570 <- readRDS ("identifiers_gpl570.rds")
@@ -19,100 +24,96 @@ identifiers <- unique (c (identifiersGPL570,identifiersGPL10558))
 #####################
 
 #####################
-#### choose multigene query
+#### CHOOSE multigene query (for example either query with TSC22D3 on collection not severe,
+#### or query with ADAMTS2 on collection severe)
 
-#### query <- c ("TSC22D3","PER1","ZBTB16","KLF9","CXCR4","DDIT4","IRS2") 
+## query <- c ("TSC22D3","PER1","ZBTB16","KLF9","CXCR4","DDIT4","IRS2") 
 query <- c ("ADAMTS2","CD163","VSIG4","FLT3","ADORA3","OLAH","DAAM2")
 #####################
 
 ####################
-## choose dataset collection
+#### CHOOSE dataset collections (here either collection not severe or collection severe) 
+#### by setting datasetnames in lines below
 
-## setwd("~/GitHub/GCblood_repo/data/expressiontables_notsevere")
+setwd("~/GitHub/GCblood_repo/data/expressiontables_notsevere")
+datasetnamesnotsevere <- dir ()
 setwd("~/GitHub/GCblood_repo/data/expressiontables_severe")
-datasetnames <- dir ()
+datasetnamessevere <- dir ()
+
+## datasetnames <- datasetnamesnotsevere
+datasetnames <- datasetnamessevere
 #####################
 
 
-
-
-
-############$$$$$$$$$$$$$$$$###################$$$$$$$$$$$$$$$$$$$
-
+################################################################################
+#### PART 2 : CALCULATE AVERAGED GENE EXPRESSION CORRELATION PROFILES
+################################################################################
 
 
 query <- intersect (query, identifiers)
 querycounter <- 0
 querylength <- length (query)
-
-
-averageprofilesallqueries_list <- list ()
 allprofilesallqueries_list <- list ()
-
+averageprofilesallqueries_list <- list ()
 counterdown <- length (datasetnames)*querylength
 
-for (jj in query){
+for (querygene in query){
 
 querycounter <- querycounter + 1
  
-  allprofiles_list <- list ()
-  ## NIEUWE REGEL 1 
-  
-  samplesizes <- numeric ()
-  
-datasetnaam <- rep (c (""), times = 1000)
-gennaam  <- rep (c (""), times = 1000)
+#### allprofiles_list will first contain gene expression correlation profiles for all probes
+#### corresponding with a single querygene, obtained for all datasets in the collection 
+
+allprofiles_list <- list ()
+samplesizes <- numeric ()
+ 
+##### makes room for up to 1000 datasets in collection 
+   
+namesofdatasets <- rep (c (""), times = 1000)
+genename  <- rep (c (""), times = 1000)
 datasetnr <- rep (c (0), times = 1000)
-probeaantal<- rep (c (0), times = 1000)
-
-
+nrofqueryprobesindatasets<- rep (c (0), times = 1000)
 
 counterdatasetup = 1
 counterprofiles = 1
 for (j in datasetnames){
   
-  ## counter <- counter -1 
+ if (j %in% datasetnamesnotsevere)  {setwd("~/GitHub/GCblood_repo/data/expressiontables_notsevere"); expressiontable <- readRDS (j)}
+ if (j %in% datasetnamessevere)  {setwd("~/GitHub/GCblood_repo/data/expressiontables_severe"); expressiontable <- readRDS (j)}
   
-  ## setwd("C:/Users/Arthur/Desktop/bloodRNA/GDStables")
-  
-  
-  ## if (j %in% datasetnames)  {setwd("~/GitHub/GCblood_repo/data/expressiontables_notsevere"); expressiontable <- readRDS (j)}
-  if (j %in% datasetnames)  {setwd("~/GitHub/GCblood_repo/data/expressiontables_severe"); expressiontable <- readRDS (j)}
-  
-      expressionmatrix <- t (expressiontable [, -c (1,2)])
-  
+  expressionmatrix <- t (expressiontable [, -c (1,2)])
   colnames (expressionmatrix) <- expressiontable [,2]
   
-  probes <- which (colnames (expressionmatrix) == jj)
+  #### taking probes as rownumbers in original expression table, not as ID_REFS
+  
+  probes <- which (colnames (expressionmatrix) == querygene)
   
   
   if (class ( expressionmatrix [,1]) != "numeric") { expressionmatrix <- apply (expressionmatrix, 2, as.numeric)}
   
-  probes <- which (colnames (expressionmatrix) == jj)
-  
-  
-  gennaam <- jj
-  aantal <- length(probes)
+  probes <- which (colnames (expressionmatrix) == querygene)
+  probenr <- length(probes)
 
-  
   counterprobesets = 0
   
-   
-  datasetnaam [counterdatasetup] <-  j
-  gennaam [counterdatasetup] <- gennaam
+  namesofdatasets [counterdatasetup] <-  j
+  genename [counterdatasetup] <- querygene
   datasetnr [counterdatasetup] <- counterdatasetup
-  probeaantal [counterdatasetup] <- aantal
+  nrofqueryprobesindatasets [counterdatasetup] <- probenr
   
   for (probe in probes){
   
     correlations_namednum <- cor (expressionmatrix [,probe],expressionmatrix)
     b <-  correlations_namednum [1, ]
+    
+    #### sort to rank all gene probes in profile according to correlation value with querygene probe
+    
     correlationsranked_namednum <- - sort (-b)
     df <- as.data.frame (correlationsranked_namednum)
     df$IDENTIFIER <- names (correlationsranked_namednum)
     colnames (df) [1] <-  paste (j, "nr" , probe, sep = "")
   
-  ## zoveel <- counterprobesets + counterprofiles
+  
   allprofiles_list [[counterprobesets + counterprofiles]] <- df
   
   counterprobesets <- counterprobesets +1
@@ -128,88 +129,98 @@ print (counterdown)
 
 
 
-## intersect filter om beste probe per dataset te vinden
+#### select best correlation profiles based on consistent results of gene probes in and between datasets
+#########################################################################################################
+
+#### calculate mean intersect with other probe profiles for each separate probe profile
+#### (take gene intersects of top 200 in ranked profiles)
 
 ll <- length (allprofiles_list)
-matriksje <- matrix (nrow = ll, ncol = ll)
+intersectmatrix <- matrix (nrow = ll, ncol = ll)
 for (x in 1:ll){
   
 for(y in 1:ll){
   
- matriksje [x,y]  <- length (intersect (allprofiles_list [[x]][1:200,2], allprofiles_list [[y]][1:200,2]))
+ intersectmatrix [x,y]  <- length (intersect (allprofiles_list [[x]][1:200,2], allprofiles_list [[y]][1:200,2]))
 }
 
 }
-matriksje[ row(matriksje) == col(matriksje) ] <- 0
-kolomgemiddelde <- colMeans (matriksje)
+intersectmatrix[ row(intersectmatrix) == col(intersectmatrix) ] <- 0
 
-## daarna ev filter om beste datasets te vinden (hierbij mogelijkheid van 2 veschillende hits verloren)
+####  to plot intersect matrix for visual :
 
+##  image (intersectmatrix)
 
+kolmeans <- colMeans (intersectmatrix)
 
+#### discarding inadequate probe profiles with low mean intersect of 5 or less
 
+setnumber <- rep (as.numeric (datasetnr), times = (as.numeric(nrofqueryprobesindatasets)))
+profilescore <- cbind (setnumber, kolmeans)
+profilescore <- as.data.frame (profilescore)
+datasetnrsused <- unique (profilescore$setnumber)
 
-probeer <- rep (as.numeric (datasetnr), times = (as.numeric(probeaantal)))
-beide <- cbind (probeer, kolomgemiddelde)
-beide <- as.data.frame (beide)
-
-ZOBETER <- unique (beide$probeer)
+#### allprofilesallqueries_list will contain gene expression correlation profiles for all probes
+#### corresponding with all querygenes, obtained for all datasets in the collection 
 
 allprofilesallqueries_list [[querycounter]] <- allprofiles_list
 
-tothier <- length (allprofiles_list)                       
-
-vectorintallaa <- as.integer ()
-for (aantaa in ZOBETER){
-  aaaa <- which (beide$probeer == aantaa)
-  use <-beide$kolomgemiddelde [aaaa]     >5 
-  vectorintaa <- aaaa [use]
-  vectorintallaa <- c (vectorintallaa, vectorintaa)
+vectorintall1 <- as.integer ()
+for (xx1 in datasetnrsused){
+  aa1 <- which (profilescore$setnumber == xx1)
+  use <-profilescore$kolmeans [aa1]     >5 
+  vectorint1 <- aa1 [use]
+  vectorintall1 <- c (vectorintall1, vectorint1)
 }
 
  
+#### taking best probe profile for each dataset
 
+vectorintall2 <- as.integer ()
+for (xx2 in datasetnrsused){
+aa2 <- which (profilescore$setnumber == xx2)
+use <-profilescore$kolmeans [aa2] == max (profilescore$kolmeans [aa2]) 
 
+#### in case of identical maxima in one dataset, only first profile used ([1])
 
-
-
-vectorintall <- as.integer ()
-for (aant in ZOBETER){
-aa <- which (beide$probeer == aant)
-use <-beide$kolomgemiddelde [aa] == max (beide$kolomgemiddelde [aa]) 
-vectorint <- aa [use] [1]
-vectorintall <- c (vectorintall, vectorint)
+vectorint2 <- aa2 [use] [1]
+vectorintall2 <- c (vectorintall2, vectorint2)
 }
 
-## beide filters
+#### only keeping one best probe profile for each dataset and probe should be adequate
+#### if best probe in a dataset is inadequate, the profile (and corresponding dataset) is not used
 
-
-filter <- intersect (vectorintallaa, vectorintall)
-tothier2 <- filter [length (filter)]
+filter <- intersect (vectorintall1, vectorintall2)
 checkfilter <- filter
-if (length (filter) == 0){filter <- c (1,2)}
 
-## weet niet waarom maar een vectorintall  [[11]] = allprofiles_list [[21,22,23]] gaat niet met fun = max, wel met mean maar geeft dan NAs
-## gds 3646, daarom gebruikt vectorintallb
+#### keep running, in case all probes for a querygene are inadequate in all (but one) datasets, remove later
 
-## allprofiles_list <- allprofiles_list
-## tothier <- length (allprofiles_list)
+checkvalues <- numeric () ; for (p in 1:ll) {checkvalue <- allprofiles_list [[p]] [1,1]; checkvalues <- c (checkvalues, checkvalue)}
+valuesone <- which (checkvalues == 1)
+
+
+if (length (filter) == 0){filter <- valuesone [1:2]}
+if (length (filter) == 1){filter <- valuesone [1:2]}
+
+
+#### for each gene in selected profiles uses the probe with maximal correlation value with the querygene
+#########################################################################################################
+
+#### CHOOSE, if especially checking for negative correlations (tails) set: FUN = min
+
 for (j in filter){
   allprofiles_list [[j]] <- aggregate (allprofiles_list[[j]] [,1], by = list (IDENTIFIER = allprofiles_list [[j]] [,2]), FUN = max)
 }
-## betere selectie van groot platform met veel genes is nodig
 
 
-## identifiers  <-  unique (allprofiles_list [[tothier2]] [,1])
+#### use selected profiles to obtain one combined (merged) profile from all datasets with mean correlation values
+#########################################################################################################
+
 mergedprofiles_df <- as.data.frame (identifiers) 
 colnames (mergedprofiles_df) <- "IDENTIFIER"
 
-
-##  omschakelen van max correlatie waarde naar rank, meancorrelation en meanrank
-
-
 for (j in filter){
-  
+
   mergedprofiles_df <- merge  (mergedprofiles_df, allprofiles_list [[j]], by = "IDENTIFIER", all.x = TRUE )
 }
 
@@ -222,162 +233,50 @@ mergedprofiles_df$supporting_datasets [r] <- sum (!is.na(mergedprofiles_df [r, 2
 
 }
 
+#### sort to rank all genes in combined profile according to mean correlation values with querygene
+
 orderedmergedprofiles_df <- mergedprofiles_df [order (-mergedprofiles_df$Correlation), ]
 averageprofiledf <- orderedmergedprofiles_df [, c (1, clength +1, clength + 2)]
-
 rownames (averageprofiledf) <- 1: length (identifiers)
 
+#### averageprofilesallqueries_list will, for each querygene, contain a single averaged gene expression correlation profile
+#### using all datasets in the collection 
+
 averageprofilesallqueries_list [[querycounter]] <- averageprofiledf
-if (length (checkfilter) == 0) {averageprofilesallqueries_list [[querycounter]] <- "no hits above 5"}
-## print (query [querycounter])
+if (length (checkfilter) == 0) {averageprofilesallqueries_list [[querycounter]] <- "no hits above threshold set at 5"}
+if (length (checkfilter) == 1) {averageprofilesallqueries_list [[querycounter]] <- "just one hit above threshold set at 5"}
+
 print (paste (query [querycounter], "done", sep = " "))
 }
 names (averageprofilesallqueries_list) <- query
 
-############## PRINT RESULTS ##############################
+################################################################################
+#### PART 3 : PRINT RESULTS FOR AVERAGED GENE EXPRESSION CORRELATION PROFILES
+################################################################################
 
-for (i in 1:querylength){use <- averageprofilesallqueries_list [[i]] [,3] >5; print (averageprofilesallqueries_list [[i]] [use,][1:25,])}
+####  in case of query genes without a resulting profile
 
-
-## in case code above was run with aggregate set to minus to see negative correlations (tails)
-##for (i in 1:querylength){use <- averageprofilesallqueries_list [[i]] [,3] >5; aa <- averageprofilesallqueries_list [[i]] [use,]; bb <- dim (aa) [1]; print (names (averageprofilesallqueries_list) [i]); cc <- bb-25 ;print (aa [cc:bb,])}
-
-
-
-##############$$$$$$$$$$$$$$$$$$$$$$$$##################$$$$$$$$$$$$$$$$$$$$
-##  hier komt code om signatures te laten zien met separate dataset collections 
-
-setwd("~/GitHub/GCblood_repo/results/fromseparatecollections")
-
-forGCsignature1_list  <- readRDS ("average_correlations_notsevere.rds")
+usegood <- logical() ; for (i in 1:querylength){useg <- class (averageprofilesallqueries_list [[i]])!= "character"; usegood <- c (usegood,useg)}
+usebad <- usegood == FALSE
+allquerynumbers <- 1:querylength
+goodquerynumbers <- allquerynumbers [usegood]
+badquerynumbers <- allquerynumbers [usebad]
 
 
+#### only shows results supported by more than 5 datasets in dataset collection (use >5)
 
-##   set use > 5
-averageprofile_dfuse <- list ()
-for (i in 1:7){vang <- forGCsignature1_list [[i]];   use <- vang [,3] > 5 ; vanguse <- vang [use,]; vanguse$ranking <- 1:dim (vanguse) [1]; averageprofile_dfuse [[i]] <- vanguse }
+for (i in goodquerynumbers){use <- averageprofilesallqueries_list [[i]] [,3] >5; print (averageprofilesallqueries_list [[i]] [use,][1:25,])}
 
-## merge but leave out profile for CXCR4
+#### in case code above was run with aggregate set to minus to see negative correlations (tails):
+##   for (i in goodquerynumbers){use <- averageprofilesallqueries_list [[i]] [,3] >5; aa <- averageprofilesallqueries_list [[i]] [use,]; bb <- dim (aa) [1]; print (names (averageprofilesallqueries_list) [i]); cc <- bb-25 ;print (aa [bb:cc,])}
 
-merger1 <- merge (averageprofile_dfuse [[1]], averageprofile_dfuse [[2]], by = "IDENTIFIER", all = TRUE)
-for (i in c (3,4,6,7)) {merger1 <- merge (merger1, averageprofile_dfuse [[i]], by = "IDENTIFIER", all = TRUE)}
-merger1$meanranking <- rowMeans (merger1 [,c (4,7,10,13,16,19)], na.rm = TRUE)
+for (i in badquerynumbers) {print (query [i]); print (head (averageprofilesallqueries_list [[i]]))}
 
-## haal weg bv genes die minder dan 3 maal in 6 profiles staan, doe ook bij scan ?
+################################################################################
+#### END
+################################################################################
 
-querygenes <- c ("TSC22D3","PER1","ZBTB16","KLF9","DDIT4","IRS2")
-allemaal <- character () ; for (i in querygenes) {begin <- paste (c ("cor", "nr", "rank"), i, sep = "."); allemaal <- c (allemaal, begin)}
-merger1order <- merger1 [order (merger1$meanranking, decreasing = FALSE),]
-
-colnames (merger1order) <- c ("gene", allemaal,"mean.rank")
-rownames (merger1order) <- 1:dim (merger1order) [1]
-merger1order$rank.mean <- 1:dim (merger1order) [1]
  
-##  nu GC signature voor severe op 15, check ook in scan code dan
-
-setwd("~/GitHub/GCblood_repo/results/fromseparatecollections")
-
-forGCsignature2_list <- readRDS ("average_correlations_severe.rds")
-
-##   set use > 5
-averageprofile_dfuse <- list ()
-for (i in 1:7){vang <- forGCsignature2_list [[i]];  use <- vang [,3] > 5 ; vanguse <- vang [use,]; vanguse$ranking <- 1:dim (vanguse) [1]; averageprofile_dfuse [[i]] <- vanguse }
-
-querygenes <- names (forGCsignature2_list)
-
-merger1 <- merge (averageprofile_dfuse [[1]], averageprofile_dfuse [[2]], by = "IDENTIFIER", all = TRUE)
-for (i in c (3:7)) {merger1 <- merge (merger1, averageprofile_dfuse [[i]], by = "IDENTIFIER", all = TRUE)}
-merger1$meanranking <- rowMeans (merger1 [,c (4,7,10,13,16,19,22)], na.rm = TRUE)
-
-## haal weg bv genes die minder dan 3 maal in 7 profiles staan, doe ook bij scan ?
-
-allemaal <- character () ; for (i in querygenes) {begin <- paste (c ("cor", "nr", "rank"), i, sep = "."); allemaal <- c (allemaal, begin)}
-merger1order <- merger1 [order (merger1$meanranking, decreasing = FALSE),]
-
-colnames (merger1order) <- c ("gene", allemaal,"mean.rank")
-rownames (merger1order) <- 1:dim (merger1order) [1]
-merger1order$rank.mean <- 1:dim (merger1order) [1]
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-#####################################################################
-
-setwd("~/GitHub/GCblood_repo/results/fromseparatecollections")
-
-## averageprofilesallqueries_list  <- readRDS ("average_correlations_notsevere.rds")
-averageprofilesallqueries_list  <- readRDS ("average_correlations_severe.rds" )
-
-
-query <- names (averageprofilesallqueries_list)
-
-querylengte <- length (query)
-
-
-vaanglijstuse <- list ()
- ##  check nog of use groter 5 beter is dan groter 2
- 
- for (i in 1:querylengte) {use <- averageprofilesallqueries_list [[i]] [,3] > 5 ; ditdf <- averageprofilesallqueries_list [[i]] [use,]; ditdf$ranking <- 1:dim (ditdf) [1]; vaanglijstuse [[i]] <- ditdf}
- ## > for (i in 1:10){print (vaanglijstuse [[i]] [1:10,])}
-
- mijngenes <- as.data.frame (query)
- colnames (mijngenes) [1] <- "IDENTIFIER"
- merger1 <- merge (mijngenes, vaanglijstuse [[1]] [,c (1,4)], by = "IDENTIFIER",all.x = TRUE)
- for (j in 2:querylengte){ merger1 <- merge (merger1, vaanglijstuse [[j]] [,c (1,4)], by = "IDENTIFIER",all.x = TRUE)}
- colnames (merger1) <- c ("gene", query)
- genesnow <- as.character (merger1$gene)
- volgorde <- numeric (); for (i in query){deze <- which (genesnow == i); volgorde <- c (volgorde, deze)}
- merger2 <- merger1 [volgorde,]
- rownames (merger2) <- as.character (merger2$gene)
- merger3 <- merger2 [,-1]
- 
- ## transpose to have profiles in rows, asymmetric square matrix
- tmerger3 <- t (merger3)
- 
- print (tmerger3)
- 
- ###################################### dit laat voorlopig maar 
- 
- ## moregenes <- c ("ZFP36L2","MCL1")
- moregenes <- c ("ARG1","MAOA")
- 
- 
- samengenes <- c (query, moregenes)
- 
- mijngenes <- as.data.frame (samengenes)
- 
- colnames (mijngenes) [1] <- "IDENTIFIER"
- merger1 <- merge (mijngenes, vaanglijstuse [[1]] [,c (1,4)], by = "IDENTIFIER",all.x = TRUE)
- for (j in 2:querylengte){ merger1 <- merge (merger1, vaanglijstuse [[j]] [,c (1,4)], by = "IDENTIFIER",all.x = TRUE)}
- colnames (merger1) <- c ("gene", query)
- genesnow <- as.character (merger1$gene)
- volgorde <- numeric (); for (i in samengenes){deze <- which (genesnow == i); volgorde <- c (volgorde, deze)}
- merger2 <- merger1 [volgorde,]
- rownames (merger2) <- as.character (merger2$gene)
- merger3 <- merger2 [,-1]
- 
- ##  transpose to have profiles in rows, asymmetric rectangular matrix
- tmerger3 <- t (merger3)
- 
- print (tmerger3)
- 
- ######################################
- 
- ##  add mean ranking for gene sets or mdules i profiles 
- 
- 
- 
- 
- 
- 
  

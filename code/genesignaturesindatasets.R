@@ -278,12 +278,12 @@ print (Results$averageprofile_df [use,] [1:50,])
 
 
 
-###################################################################################
-#### USING PRECALCULATED averaged profiles on same 30 datasets as used for ADAMTS2
-###################################################################################
+###############################################################################################
+#### USING PRECALCULATED averaged profiles on same 30 datasets as used in example ADAMTS2 above
+###############################################################################################
 
 
-##  FIRST GC-1
+##  FIRST WITH GENES USED TO OBTAIN GC SIGNATURE 1
 
 setwd("~/GitHub/GCblood_repo/results/signatures")
 
@@ -292,7 +292,7 @@ forGCsignature1_list <- readRDS ("forGCsignature1.rds")
 ##   set minimal number of supporting datasets required for all genes present in each averageprofiledf  : use > 5
 
 averageprofile_dfuse <- list ()
-for (i in 1:7) {
+for (i in 1:6) {
   file <-
     forGCsignature1_list [[i]]; averageprofiledf <-
       file$averageprofile_df;  use <-
@@ -303,18 +303,18 @@ for (i in 1:7) {
 }
 
 ##  combine 6 averageprofiledf for average of averages
-##  but leave out profile for CXCR4, according to signature GC-1 in manuscript
+
 
 merger1 <-
   merge (averageprofile_dfuse [[1]], averageprofile_dfuse [[2]], by = "IDENTIFIER", all = TRUE)
-for (i in c (3,4,6,7)) {
+for (i in c (3,4,5,6)) {
   merger1 <-
     merge (merger1, averageprofile_dfuse [[i]], by = "IDENTIFIER", all = TRUE)
 }
 merger1$meanranking <-
   rowMeans (merger1 [,c (4,7,10,13,16,19)], na.rm = TRUE)
 
-querygenes <- c ("TSC22D3","PER1","ZBTB16","KLF9","DDIT4","IRS2")
+querygenes <- names (forGCsignature1_list)
 mergercolnames <-
   character () ; for (i in querygenes) {
     begin <-
@@ -328,15 +328,29 @@ colnames (merger1order) <- c ("gene", mergercolnames,"mean.rank")
 rownames (merger1order) <- 1:dim (merger1order) [1]
 merger1order$rank.mean <- 1:dim (merger1order) [1]
 
+##########
+#### remove genes supported by too few profiles in total from all query genes
+#### 
 
-print ("RANKED PROFILES FOR 6 GC-1 QUERY GENES AND RANKED AVERAGED PROFILE")
+merger1order$sumofsupportingprofiles <- rowSums(merger1order [,c (3,6,9,12,15,18)], na.rm = TRUE)
+hitwithmostgenequeries <- merger1order$sumofsupportingprofiles > 5*length (querygenes)
 
-print (head (merger1order))
+merger2order <- merger1order [hitwithmostgenequeries,]
 
-print (merger1order [1:50, c (1, 20)])
+rownames (merger2order) <- 1:dim (merger2order) [1]
+merger2order$rank.mean <- 1:dim (merger2order) [1]
 
 
-##  SECOND GC2
+##########
+
+print ("RANKED PROFILES FOR 6 GC SIGNATURE 1 QUERY GENES AND RANKED AVERAGED PROFILE")
+
+print (head (merger2order))
+
+print (merger2order [1:50, c (1, 20)])
+
+
+##  SECOND WITH GENES USED TO OBTAIN GC SIGNATURE 2
 
 setwd("~/GitHub/GCblood_repo/results/signatures")
 
@@ -383,11 +397,25 @@ colnames (merger1order) <- c ("gene", mergercolnames,"mean.rank")
 rownames (merger1order) <- 1:dim (merger1order) [1]
 merger1order$rank.mean <- 1:dim (merger1order) [1]
 
-print ("RANKED PROFILES FOR 7 GC-2 QUERY GENES AND RANKED AVERAGED PROFILE")
+##########
+#### remove genes supported by too few profiles in total from all query genes
+#### 
 
-print (head (merger1order))
+merger1order$sumofsupportingprofiles <- rowSums(merger1order [,c (3,6,9,12,15,18,21)], na.rm = TRUE)
+hitwithmostgenequeries <- merger1order$sumofsupportingprofiles > 5*length (querygenes)
 
-print (merger1order [1:50, c (1, 23)])
+merger2order <- merger1order [hitwithmostgenequeries,]
+
+rownames (merger2order) <- 1:dim (merger2order) [1]
+merger2order$rank.mean <- 1:dim (merger2order) [1]
+
+##### 
+
+print ("RANKED PROFILES FOR 7 GC SIGNATURE 2 QUERY GENES AND RANKED AVERAGED PROFILE")
+
+print (head (merger2order))
+
+print (merger2order [1:50, c (1, 23)])
 
 ######################################################################################
 ##################### END
