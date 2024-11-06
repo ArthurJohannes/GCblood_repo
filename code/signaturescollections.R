@@ -4,10 +4,11 @@
 ####  COMBINING AVERAGED EXPRESSION CORRELATION PROFILES FOR SINGLE GENES TO DERIVE ROBUST GENE SIGNATURE
 ####  USING PRECALCULATED RESULTS OBTAINED WITH R SCRIPT SELECTCOLLECTIONS.R 
 
+####  USE AT LEAST 2 GENES IN QUERY
 
 
 ###############################################################################################
-####  FIRST WITH 6 GENES FOR GC SIGNATURE 1
+####  FIRST WITH query GENES FOR GC SIGNATURE 1
 ###############################################################################################
 
 #####################
@@ -19,10 +20,17 @@ averagenotsevere_listall  <- readRDS ("average_correlations_notsevere.rds")
 #####################
 
 #####################
-#### take 6 query genes from results
+#### choose query genes for GC signature 1 (little bias, or neutrophil bias)
 
 thenames <- names (averagenotsevere_listall)
-querysignature1 <- c ("PER1","ZBTB16","DDIT4","TSC22D3","KLF9","IRS2")
+
+queryGCsignature1littlebias <- c ("PER1","ZBTB16","DDIT4","TSC22D3","KLF9","IRS2")
+queryGCsignature1biasneutrophil <- c ("TSC22D3","IRS2","FKBP5","ECHDC3","TPST1")
+
+
+querysignature1 <- queryGCsignature1littlebias ; querychoice <- "query GC signature 1 little bias"
+## querysignature1 <- queryGCsignature1biasneutrophil ; querychoice <- "query GC signature 1 bias neutrophil"
+
 theorder<- numeric () ; for (i in querysignature1) {thisone <- which (thenames  == i); theorder <- c (theorder, thisone)}
 
 averagenotsevere_list <- list ()
@@ -31,7 +39,7 @@ names (averagenotsevere_list) <- querysignature1
 #####################
 
 #####################
-#### set use > 5 (minimal number of supporting datasets)
+#### set use > 5 (minimal number of supporting datasets for collection n = 15)
 lengthquery1 <- length (querysignature1 )
 
 averageprofile_dfuse <- list ()
@@ -39,7 +47,7 @@ for (i in 1:lengthquery1 ){averagedf <- averagenotsevere_list [[i]];   use <- av
 #####################
 
 #####################
-#### combine and average 6 profiles in list averageprofile_dfuse
+#### combine and average query gene profiles in list averageprofile_dfuse
 
 merger1 <- merge (averageprofile_dfuse [[1]], averageprofile_dfuse [[2]], by = "IDENTIFIER", all = TRUE)
 for (i in c (3:lengthquery1 )) {merger1 <- merge (merger1, averageprofile_dfuse [[i]], by = "IDENTIFIER", all = TRUE)}
@@ -47,7 +55,7 @@ for (i in c (3:lengthquery1 )) {merger1 <- merge (merger1, averageprofile_dfuse 
 thesecolnumbers <- c (1:lengthquery1)*3 +1
 merger1$meanranking <- rowMeans (merger1 [,thesecolnumbers], na.rm = TRUE)
 
-querygenes <- names (averagenotsevere_list) [1:zoveel]
+querygenes <- names (averagenotsevere_list)
 kolnames1 <- character () ; for (i in querygenes) {begin <- paste (c ("cor", "nr", "rank"), i, sep = "."); kolnames1 <- c (kolnames1, begin)}
 merger1order <- merger1 [order (merger1$meanranking, decreasing = FALSE),]
 
@@ -68,17 +76,23 @@ merger2order$rank.mean <- 1:dim (merger2order) [1]
 #####################
 
 #####################
-#### print ranked profiles and GC signature 1 combined for 6 genes on collection of 15 datasets not severe
-print ("RANKED PROFILES FOR 6 GC SIGNATURE 1 QUERY GENES AND RANKED AVERAGED PROFILE")
+#### print ranked profiles and GC signature 1 combined for query genes on collection of 15 datasets not severe
+print ("RANKED PROFILES GC SIGNATURE 1 QUERY GENES AND RANKED AVERAGED PROFILE")
+
+print (querychoice)
 
 print (head (merger2order))
 
-print (merger2order [1:50, c (1, 20)])
+colnrmeanrank <- which (colnames (merger2order) == "mean.rank")
+
+print (querychoice)
+
+print (merger2order [1:50, c (1, colnrmeanrank)])
 #####################
 
 
 ###############################################################################################
-####  SECOND WITH 7 GENES FOR GC SIGNATURE 2
+####  SECOND WITH query GENES FOR GC SIGNATURE 2
 ###############################################################################################
 
 #####################
@@ -90,10 +104,20 @@ averagesevere_listall <-  readRDS ("average_correlations_severe.rds" )
 #####################
 
 #####################
-#### take 7 query genes from results
+#### choose query genes for GC signature 2
 
 thenames <- names (averagesevere_listall )
-querysignature2 <- c ("FLT3","ADORA3","CD163","OLAH","DAAM2","ADAMTS2","VSIG4")
+
+queryGCsignature2biasmyeloid <- c ("FLT3","ADORA3","CD163","OLAH","DAAM2","ADAMTS2","VSIG4")
+queryGCsignature2biasneutrophil <- c ("OLAH","IL1R2","IL18R1","FKBP5","ECHDC3")
+queryGCsignature2biasmonocyte <- c ("FLT3","ADAMTS2","VSIG4","AMPH","GPER1")
+
+
+querysignature2 <- queryGCsignature2biasmyeloid ; querychoice <- c ("query GC signature 2 bias myeloid cells")
+## querysignature2 <- queryGCsignature2biasneutrophil ; querychoice <- c ("query GC signature 2 bias neutrophil") 
+## querysignature2 <- queryGCsignature2biasmonocyte ;  querychoice <- c ("query GC signature 2 bias monocyte") 
+
+
 theorder <- numeric () ; for (i in querysignature2) {thisone <- which (thenames == i); theorder <- c (theorder, thisone)}
 
 averagesevere_list <- list ()
@@ -103,7 +127,7 @@ names (averagesevere_list) <- querysignature2
 #####################
 
 #####################
-#### set use > 5 (minimal number of supporting datasets)
+#### set use > 5 (minimal number of supporting datasets for collection n = 15)
 
 lengthquery2  <- length (querysignature2 )
 
@@ -113,13 +137,13 @@ averageprofile_dfuse <- list ()
 for (i in 1:lengthquery2){averagedf <- averagesevere_list [[i]];  use <- averagedf [,3] > 5 ; averagedfuse <- averagedf [use,]; averagedfuse$ranking <- 1:dim (averagedfuse) [1]; averageprofile_dfuse [[i]] <- averagedfuse }
 
 #####################
-#### combine and average 7 profiles in list averageprofile_dfuse
+#### combine and average query gene profiles in list averageprofile_dfuse
 
 merger1 <- merge (averageprofile_dfuse [[1]], averageprofile_dfuse [[2]], by = "IDENTIFIER", all = TRUE)
 for (i in c (3:lengthquery2 )) {merger1 <- merge (merger1, averageprofile_dfuse [[i]], by = "IDENTIFIER", all = TRUE)}
 merger1$meanranking <- rowMeans (merger1 [,thesecolnumbers], na.rm = TRUE)
 
-querygenes <- names (averagesevere_list) [1:7]
+querygenes <- names (averagesevere_list)
 kolnames1 <- character () ; for (i in querygenes) {begin <- paste (c ("cor", "nr", "rank"), i, sep = "."); kolnames1 <- c (kolnames1, begin)}
 merger1order <- merger1 [order (merger1$meanranking, decreasing = FALSE),]
 
@@ -141,13 +165,19 @@ rownames (merger2order) <- 1:dim (merger2order) [1]
 merger2order$rank.mean <- 1:dim (merger2order) [1]
 
 #####################
-#### print ranked profiles and GC signature 2 combined for 7 genes on collection of 15 datasets severe
+#### print ranked profiles and GC signature 2 combined for query genes on collection of 15 datasets severe
 
-print ("RANKED PROFILES FOR 7 GC SIGNATURE 2 QUERY GENES AND RANKED AVERAGED PROFILE")
+print ("RANKED PROFILES GC SIGNATURE 2 QUERY GENES AND RANKED AVERAGED PROFILE")
+
+print (querychoice)
 
 print (head (merger2order))
 
-print (merger2order [1:50, c (1, 23)])
+colnrmeanrank <- which (colnames (merger2order) == "mean.rank")
+
+print (querychoice)
+
+print (merger2order [1:50, c (1, colnrmeanrank)])
 
 #####################
 

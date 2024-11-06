@@ -15,13 +15,18 @@
 
 #####################
 #### read all gene identifiers (all gene names on platforms GPL570 and GPL10558)
-#### No RNAseq datasets are present in the example collection, but otherwise add more RNAseq identifiers
-#### to include the more recent HUGO gene names and gene aliases absent from GPL570 and GPL10558
 
 setwd("~/GitHub/GCblood_repo/data")
 identifiersGPL570 <- readRDS ("identifiers_gpl570.rds")
 identifiersGPL10558 <- readRDS ("identifiers_gpl10558.rds")
-identifiers <- unique (c (identifiersGPL570,identifiersGPL10558))
+
+#### to include the more recent HUGO gene names and gene aliases absent from GPL570 and GPL10558
+
+hugoandaliasdf <- readRDS ("hugoandaliasdf.rds")
+identifiersinhugoandaliasdf <- c (hugoandaliasdf$aliasname, hugoandaliasdf$hugoname)
+
+
+identifiers <- unique (c (identifiersGPL570,identifiersGPL10558,identifiersinhugoandaliasdf ))
 #####################
 
 #####################
@@ -83,6 +88,20 @@ for (querygene in query){
     
     if (j %in% datasetnamesnotsevere)  {setwd("~/GitHub/GCblood_repo/data/expressiontables_notsevere"); expressiontable <- readRDS (j)}
     if (j %in% datasetnamessevere)  {setwd("~/GitHub/GCblood_repo/data/expressiontables_severe"); expressiontable <- readRDS (j)}
+    
+    #### to exchange gene aliases in table for more recent HUGO gene names
+    
+    genesintable <- as.character (expressiontable  [,2])
+    
+    genestohugo <- intersect (hugoandaliasdf$aliasname, genesintable)
+    theseones <- numeric () ;for (i in genestohugo) {thisone <- which (hugoandaliasdf$aliasname == i); theseones <- c(theseones, thisone)}
+    hugoandaliasdfuse <- hugoandaliasdf [theseones,]
+    
+    aliasestochange <- hugoandaliasdfuse$aliasname
+    genesintable2 <- genesintable ;counteralias <- 0; for (i in aliasestochange) {counteralias <- counteralias +1 ; thisone <- which (genesintable == i);  genesintable2 [thisone] <- hugoandaliasdfuse$hugoname [counteralias]}
+    expressiontable [,2] <- genesintable2
+    
+    
     
     expressionmatrix <- t (expressiontable [, -c (1,2)])
     colnames (expressionmatrix) <- expressiontable [,2]
@@ -157,6 +176,9 @@ for (querygene in query){
   kolmeans <- colMeans (intersectmatrix)
   
   #### discarding inadequate probe profiles with low mean intersect of 5 or less
+  #### for smaller dataset collections use all available datasets with gene present 
+  
+  
   
   setnumber <- rep (as.numeric (datasetnr), times = (as.numeric(nrofqueryprobesindatasets)))
   profilescore <- cbind (setnumber, kolmeans)
@@ -172,6 +194,8 @@ for (querygene in query){
   for (xx1 in datasetnrsused){
     aa1 <- which (profilescore$setnumber == xx1)
     use <-profilescore$kolmeans [aa1]     >5 
+    ##### for smaller dataset collections instead: 
+    ##### use <-profilescore$kolmeans [aa1]     > 0 
     vectorint1 <- aa1 [use]
     vectorintall1 <- c (vectorintall1, vectorint1)
   }
