@@ -34,7 +34,9 @@ querysignature1 <- queryGCsignature1littlebias ; querychoice <- "query GC signat
 theorder<- numeric () ; for (i in querysignature1) {thisone <- which (thenames  == i); theorder <- c (theorder, thisone)}
 
 averagenotsevere_list <- list ()
+
 counterb <- 0 ; for (j in theorder){counterb <- counterb +1 ;averagenotsevere_list [[counterb]] <- averagenotsevere_listall  [[j]]}
+
 names (averagenotsevere_list) <- querysignature1
 #####################
 

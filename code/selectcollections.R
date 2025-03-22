@@ -30,16 +30,32 @@ identifiers <- unique (c (identifiersGPL570,identifiersGPL10558,identifiersinhug
 #####################
 
 #####################
-#### CHOOSE multigene query (for example either query with TSC22D3 on collection not severe,
-#### or query with ADAMTS2 on collection severe)
+#### CHOOSE multigene query (for example either queries 1-3 with collection WB not severe,
+#### or queries 4-7 with collection WB severe)
 
-## query <- c ("ZBTB16","KLF9","DDIT4","TSC22D3","PER1","IRS2","CXCR4","FKBP5","CD163","VSIG4","ADAMTS2","FLT3","MAOA","AMPH","ADORA3","C5orf30","OLAH","DAAM2","ARG1")
-## query <- c ("TSC22D3","PER1","ZBTB16","KLF9","CXCR4","DDIT4","IRS2") 
- query <- c ("ADAMTS2","CD163","VSIG4","FLT3","ADORA3","OLAH","DAAM2")
+### query 1 (GC not severe little bias)
+query1 <- c ("PER1","ZBTB16","DDIT4","TSC22D3","KLF9","IRS2")
+### query 2 (GC not severe bias lymphoid cells)
+query2 <- c ("DDIT4")
+### query 3 (GC not severe bias neutrophils)
+query3 <- c ("TSC22D3","IRS2","FKBP5","ECHDC3","TPST1")
+### query 4 (GC severe bias lymphoid cells)
+query4 <- c ("DDIT4")
+### query 5 (GC severe bias myeloid cells)
+query5 <- c ("FLT3","ADORA3","CD163","OLAH","DAAM2","ADAMTS2","VSIG4")
+### query 6 (GC severe bias neutrophil)
+query6 <- c ("OLAH","IL1R2","IL18R1","FKBP5","ECHDC3")
+### query 7 (GC severe bias monocyte)
+query7 <- c ("FLT3","ADAMTS2","VSIG4","AMPH","GPER1")
+
+query19genes <- c ("ZBTB16","KLF9","DDIT4","TSC22D3","PER1","IRS2","CXCR4","FKBP5","CD163","VSIG4","ADAMTS2","FLT3","MAOA","AMPH","ADORA3","C5orf30","OLAH","DAAM2","ARG1")
+
+##### for example query5
+query <- query5
 #####################
 
 ####################
-#### CHOOSE dataset collections (here either collection not severe or collection severe) 
+#### CHOOSE dataset collections (here either collection WB not severe or collection WB severe) 
 #### by setting datasetnames in lines below
 
 setwd("~/GitHub/GCblood_repo/data/expressiontables_notsevere")
@@ -47,6 +63,7 @@ datasetnamesnotsevere <- dir ()
 setwd("~/GitHub/GCblood_repo/data/expressiontables_severe")
 datasetnamessevere <- dir ()
 
+##### for example collection WB severe
 ## datasetnames <- datasetnamesnotsevere
 datasetnames <- datasetnamessevere
 #####################
