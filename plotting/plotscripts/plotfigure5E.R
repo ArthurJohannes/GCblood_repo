@@ -13,26 +13,27 @@ modules <- readRDS ("modulesGC2andGC1.rds")
 
 ##  EDITING meta file
 
-### remove 168h samples from meta file
+
+  gse77791meta2 <- gse77791meta 
  
- samplesnotused <- which (gse77791meta$time == "168h after treatment")
- gse77791meta2 <- gse77791meta [-samplesnotused,] 
- dim (gse77791meta2)
- rownames (gse77791meta2) <- 1:99
+  rownames (gse77791meta2) <- 1:117
  
   print (gse77791meta2)
  
-### add new factor illness to meta file
-  
-  
-  illness <- rep ("other", times = 99)
-  illness [1:13] <- "healthy"
-  illness [14:73] <- "b.shock"
-  illness [74:99] <- "b.shock GC"
-  gse77791meta2$illness <- illness
-  gse77791meta2$illness <- factor (gse77791meta2$illness, levels = c ("healthy","b.shock","b.shock GC"))
 
-  #### NAME MORE GENERALLY
+   illness <- rep ("other", times = 117)
+   illness [1:13] <- "H"
+   illness [14:69] <- "pl."
+   illness [70:117] <- "hy."
+   gse77791meta2$illness <- illness
+   gse77791meta2$illness <- factor (gse77791meta2$illness, levels = c ("H","pl.","hy."))
+  
+  
+  
+  
+  
+  
+   #### NAME MORE GENERALLY
   
   metadfnr2 <- gse77791meta2
   
@@ -273,10 +274,10 @@ modules <- readRDS ("modulesGC2andGC1.rds")
       scale_y_continuous(limits = c (minpoint,maxpoint)) +
       ggtitle(titlename) +
       theme (
-        axis.title.x = element_blank(), axis.title.y = element_blank(),axis.text.x = element_text(size =
-                                                                                                    40), axis.text.y = element_text(size = 40),plot.title = element_text(size =
-                                                                                                                                                                           60)
+        plot.margin =  unit (c (1,1,1,1),"cm"),plot.title = element_text(face = "bold", size = 100),axis.title.x = element_blank(), axis.title.y = element_blank(),axis.text.x = element_text(face = "bold", size =
+                                                                                                                                                                                                80), axis.text.y = element_text(face = "bold", size = 40)
       )
+    
     
     
     

@@ -30,9 +30,12 @@ ill <- which (days2 == "ill")
 
 illinfluenza <- intersect (influenza, ill)
 illnotinfluenza <- intersect (notinfluenza, ill)
+healthyinfluenza <- intersect (influenza, healthy)
+healthynotinfluenza <- intersect (notinfluenza, healthy)
 
 illness <- rep ("other", times = 880)
-illness [healthy] <- "H"
+illness [healthyinfluenza] <- "H1"
+illness [healthynotinfluenza] <- "H2"
 illness [illinfluenza] <- "ill infl"
 illness [illnotinfluenza] <- "ill no infl"
 
@@ -223,6 +226,16 @@ df_forplot3$illness <- metadfnr2$illness
 df_forplot <- cbind (df_forplot2 [, c (1,2,3)], df_forplot1 [,c (1,2)], df_forplot2 [, c (4,5,6)])
 ## df_forplot <- df_forplot3
 
+################# REMOVE ILL NO INFLUENZA AND CORRESPONDING HEALTHY CONTROLS 
+
+healthycontrolsforinfluenza <-  which (df_forplot$illness == "H1")
+df_forplot$illness [ healthycontrolsforinfluenza] <- "H"
+withinfluenza <-  which (df_forplot$illness == "ill infl")
+df_forplot$illness [ withinfluenza] <- "influenza"
+remove1 <- which (df_forplot$illness == "H2")
+remove2 <- which (df_forplot$illness == "ill no infl")
+df_forplot <- df_forplot [-c (remove1, remove2),]
+
 
 ################# TO PLOT ###################################################
 
@@ -290,10 +303,10 @@ for (i in 1:nrofmodules) {
     scale_y_continuous(limits = c (minpoint,maxpoint)) +
     ggtitle(titlename) +
     theme (
-      axis.title.x = element_blank(), axis.title.y = element_blank(),axis.text.x = element_text(size =
-                                                                                                  40), axis.text.y = element_text(size = 40),plot.title = element_text(size =
-                                                                                                                                                                         60)
+      plot.margin =  unit (c (1,1,1,1),"cm"),plot.title = element_text(face = "bold", size = 80),axis.title.x = element_blank(), axis.title.y = element_blank(),axis.text.x = element_text(face = "bold", size =
+                                                                                                                                                                                             80), axis.text.y = element_text(face = "bold", size = 40)
     )
+  
   
   
   

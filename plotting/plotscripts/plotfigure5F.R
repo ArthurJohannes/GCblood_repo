@@ -266,9 +266,8 @@ for (i in 1:nrofmodules) {
     scale_y_continuous(limits = c (minpoint,maxpoint)) +
     ggtitle(titlename) +
     theme (
-      axis.title.x = element_blank(), axis.title.y = element_blank(),axis.text.x = element_text(size =
-                                                                                                  40), axis.text.y = element_text(size = 40),plot.title = element_text(size =
-                                                                                                                                                                         60)
+      plot.margin =  unit (c (1,1,1,1),"cm"),plot.title = element_text(face = "bold", size = 100),axis.title.x = element_blank(), axis.title.y = element_blank(),axis.text.x = element_text(face = "bold", size =
+                                                                                                                                                                                              60), axis.text.y = element_text(face = "bold", size = 40)
     )
   
   
